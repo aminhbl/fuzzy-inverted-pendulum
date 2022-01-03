@@ -5,6 +5,7 @@ from math import degrees
 
 # pyfuzzy imports
 from fuzzy.storage.fcl.Reader import Reader
+import numpy as np
 
 
 class FuzzyController:
@@ -29,9 +30,9 @@ class FuzzyController:
 
     def up_more_right(self, x):
         if 0 < x <= 30:
-            return (1/30)*x
+            return (1 / 30) * x
         elif 30 < x < 60:
-            return -(1/30)*x + 2
+            return -(1 / 30) * x + 2
         else:
             return 0
 
@@ -42,7 +43,6 @@ class FuzzyController:
             return -(1 / 30) * x + 3
         else:
             return 0
-
 
     def up(self, x):
         if 60 < x <= 90:
@@ -160,21 +160,21 @@ class FuzzyController:
         if -80 < x <= -60:
             return 0.05 * x + 4
         elif -60 < x < 0:
-            return -(1/60) * x
+            return -(1 / 60) * x
         else:
             return 0
 
     def stop(self, x):
         if -60 < x <= 0:
-            return (1/60) * x + 1
+            return (1 / 60) * x + 1
         elif 0 < x < 60:
-            return -(1/60) * x + 1
+            return -(1 / 60) * x + 1
         else:
             return 0
 
     def right_slow(self, x):
         if 0 < x <= 60:
-            return (1/60) * x
+            return (1 / 60) * x
         elif 60 < x < 80:
             return -0.05 * x + 4
         else:
@@ -204,16 +204,98 @@ class FuzzyController:
         pv = inputs['pv']
         cw_fast = self.cw_fast(pv)
         cw_slow = self.cw_slow(pv)
-        stop = self.stop(pv)
+        pv_stop = self.stop(pv)
         ccw_slow = self.ccw_slow(pv)
         ccw_fast = self.ccw_fast(pv)
 
         right_fast_rules = [
-
+            min(up_more_right, ccw_slow),
+            min(up_more_right, cw_slow),
+            min(up_more_right, cw_fast),
+            min(down_more_right, ccw_slow),
+            min(down_right, ccw_slow),
+            min(down_right, cw_slow),
+            min(up_right, cw_slow),
+            min(up_right, pv_stop),
+            min(up_right, cw_fast),
+            min(up_left, cw_fast),
+            min(down, pv_stop),
+            min(up, cw_fast)
         ]
+        right_fast_max = max(right_fast_rules)
+
+        left_fast_rules = [
+            min(up_more_left, cw_slow),
+            min(up_more_left, ccw_slow),
+            min(up_more_left, ccw_fast),
+            min(down_more_left, cw_slow),
+            min(down_left, cw_slow),
+            min(down_left, ccw_slow),
+            min(up_left, ccw_slow),
+            min(up_left, pv_stop),
+            min(up_right, ccw_fast),
+            min(up_left, ccw_fast),
+            min(up, ccw_fast)
+        ]
+        left_fast_max = max(left_fast_rules)
+
+        right_slow_rules = [
+            min(up_more_left, cw_fast),
+            min(down_right, cw_fast),
+            min(up_right, ccw_slow),
+            min(up, cw_slow)
+        ]
+        right_slow_max = max(right_slow_rules)
+
+        left_slow_rules = [
+            min(up_more_right, ccw_fast),
+            min(down_left, ccw_fast),
+            min(up_left, cw_slow),
+            min(up, ccw_slow)
+        ]
+        left_slow_max = max(left_slow_rules)
+
+        stop_rules = [
+            max(min(up, pv_stop), min(up_right, ccw_slow), min(up_left, cw_slow)),
+            min(down_more_right, cw_slow),
+            min(down_more_left, ccw_slow),
+            min(down_more_right, ccw_fast),
+            min(down_more_right, cw_fast),
+            min(down_more_left, cw_fast),
+            min(down_more_left, ccw_fast),
+            min(down_right, ccw_fast),
+            min(down_left, cw_fast),
+            min(down, cw_fast),
+            min(down, ccw_fast),
+            min(up, pv_stop)
+        ]
+        stop_max = max(stop_rules)
+
+        force_points = np.linspace(-100, 100, 1000)
+        force_membership = []
+
+        for point in force_points:
+            force_membership.append(max(
+                min(right_fast_max, self.right_fast(point)),
+                min(left_fast_max, self.left_fast(point)),
+                min(right_slow_max, self.right_slow(point)),
+                min(left_slow_max, self.left_slow(point)),
+                min(stop_max, self.stop(point))
+            ))
+
+        mass_center_dividened = 0
+        mass_center_divisor = 0
+        dx = force_points[1] - force_points[0]
+        for i in range(len(force_points)):
+            mass_center_dividened += force_membership[i] * force_points[i] * dx
+            mass_center_divisor += force_membership[i] * dx
+
+        mass_center = mass_center_dividened / mass_center_divisor
+        return mass_center
 
     def decide(self, world):
         output = self._make_output()
-        self.inference(self._make_input(world))
-        self.system.calculate(self._make_input(world), output)
-        return output['force']
+        force = self.inference(self._make_input(world))
+        return force
+        # self.system.calculate(self._make_input(world), output)
+        # return output['force']
