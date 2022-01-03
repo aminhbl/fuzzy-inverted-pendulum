@@ -120,6 +120,11 @@ FUNCTION_BLOCK InvertedPendulum
 		RULE 41: IF (pa IS up) AND (pv IS cw_fast) THEN force IS right_fast;
 		RULE 42: IF (pa IS up) AND (pv IS stop) THEN force IS stop;
 
+		RULE 43: IF (pa IS up_right) AND (cp IS left_near) THEN force IS right_slow;
+		RULE 44: IF (pa IS up_left) AND (cp IS right_near) THEN force IS left_slow;
+		RULE 43: IF (pa IS up_more_right) AND (cp IS left_near) THEN force IS right_fast;
+		RULE 44: IF (pa IS up_more_left) AND (cp IS right_near) THEN force IS left_fast;
+
 	END_RULEBLOCK
 
 END_FUNCTION_BLOCK

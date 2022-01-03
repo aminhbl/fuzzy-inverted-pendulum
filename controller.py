@@ -30,81 +30,81 @@ class FuzzyController:
 
     def up_more_right(self, x):
         if 0 < x <= 30:
-            return (1 / 30) * x
+            return x / 30
         elif 30 < x < 60:
-            return -(1 / 30) * x + 2
+            return -x / 30 + 2
         else:
             return 0
 
     def up_right(self, x):
         if 30 < x <= 60:
-            return (1 / 30) * x - 1
+            return x / 30 - 1
         elif 60 < x < 90:
-            return -(1 / 30) * x + 3
+            return -x / 30 + 3
         else:
             return 0
 
     def up(self, x):
         if 60 < x <= 90:
-            return (1 / 30) * x - 2
+            return x / 30 - 2
         elif 90 < x < 120:
-            return -(1 / 30) * x + 4
+            return -x / 30 + 4
         else:
             return 0
 
     def up_left(self, x):
         if 90 < x <= 120:
-            return (1 / 30) * x - 3
+            return x / 30 - 3
         elif 120 < x < 150:
-            return -(1 / 30) * x + 5
+            return -x / 30 + 5
         else:
             return 0
 
     def up_more_left(self, x):
         if 120 < x <= 150:
-            return (1 / 30) * x - 4
+            return x / 30 - 4
         elif 150 < x < 180:
-            return -(1 / 30) * x + 6
+            return -x / 30 + 6
         else:
             return 0
 
     def down_more_left(self, x):
         if 180 < x <= 210:
-            return (1 / 30) * x - 6
+            return x / 30 - 6
         elif 210 < x < 240:
-            return -(1 / 30) * x + 8
+            return -x / 30 + 8
         else:
             return 0
 
     def down_left(self, x):
         if 210 < x <= 240:
-            return (1 / 30) * x - 7
+            return x / 30 - 7
         elif 240 < x < 270:
-            return -(1 / 30) * x + 9
+            return -x / 30 + 9
         else:
             return 0
 
     def down(self, x):
         if 240 < x <= 270:
-            return (1 / 30) * x - 8
+            return x / 30 - 8
         elif 270 < x < 300:
-            return -(1 / 30) * x + 10
+            return -x / 30 + 10
         else:
             return 0
 
     def down_right(self, x):
         if 270 < x <= 300:
-            return (1 / 30) * x - 9
+            return x / 30 - 9
         elif 300 < x < 330:
-            return -(1 / 30) * x + 11
+            return -x / 30 + 11
         else:
             return 0
 
     def down_more_right(self, x):
         if 300 < x <= 330:
-            return (1 / 30) * x - 10
+            return x / 30 - 10
         elif 330 < x < 360:
-            return -(1 / 30) * x + 12
+            return -x / 30 + 12
         else:
             return 0
 
@@ -112,7 +112,9 @@ class FuzzyController:
 
     def cw_fast(self, x):
         if -200 <= x < -100:
-            return 0.01 * x - 1
+            return -0.01 * x - 1
+        elif x < -200:
+            return 1
         else:
             return 0
 
@@ -124,7 +126,7 @@ class FuzzyController:
         else:
             return 0
 
-    def stop(self, x):
+    def pv_stop(self, x):
         if -100 < x <= 0:
             return 0.01 * x + 1
         elif 0 < x < 100:
@@ -143,6 +145,8 @@ class FuzzyController:
     def ccw_fast(self, x):
         if 100 < x <= 200:
             return 0.01 * x - 1
+        elif x > 200:
+            return 1
         else:
             return 0
 
@@ -160,21 +164,21 @@ class FuzzyController:
         if -80 < x <= -60:
             return 0.05 * x + 4
         elif -60 < x < 0:
-            return -(1 / 60) * x
+            return -x / 60
         else:
             return 0
 
-    def stop(self, x):
+    def f_stop(self, x):
         if -60 < x <= 0:
-            return (1 / 60) * x + 1
+            return x / 60 + 1
         elif 0 < x < 60:
-            return -(1 / 60) * x + 1
+            return -x / 60 + 1
         else:
             return 0
 
     def right_slow(self, x):
         if 0 < x <= 60:
-            return (1 / 60) * x
+            return x / 60
         elif 60 < x < 80:
             return -0.05 * x + 4
         else:
@@ -201,12 +205,32 @@ class FuzzyController:
         down_right = self.down_right(pa)
         down_more_right = self.down_more_right(pa)
 
+        # print(pa)
+        # print()
+        # print(up_more_right)
+        # print(up_right)
+        # print(up)
+        # print(up_left)
+        # print(up_more_left)
+        # print(down_more_left)
+        # print(down_left)
+        # print(down)
+        # print(down_right)
+        # print(down_more_right)
+
         pv = inputs['pv']
         cw_fast = self.cw_fast(pv)
         cw_slow = self.cw_slow(pv)
-        pv_stop = self.stop(pv)
+        pv_stop = self.pv_stop(pv)
         ccw_slow = self.ccw_slow(pv)
         ccw_fast = self.ccw_fast(pv)
+
+        # print('pv: {}'.format(pv))
+        # print(cw_fast)
+        # print(cw_slow)
+        # print(pv_stop)
+        # print(ccw_slow)
+        # print(ccw_fast)
 
         right_fast_rules = [
             min(up_more_right, ccw_slow),
@@ -271,8 +295,15 @@ class FuzzyController:
         ]
         stop_max = max(stop_rules)
 
-        force_points = np.linspace(-100, 100, 1000)
+        force_points = np.linspace(-100, 100, 1700)
         force_membership = []
+
+        # print('force cuts:')
+        # print(left_fast_max)
+        # print(left_slow_max)
+        # print(stop_max)
+        # print(right_slow_max)
+        # print(right_fast_max)
 
         for point in force_points:
             force_membership.append(max(
@@ -280,7 +311,7 @@ class FuzzyController:
                 min(left_fast_max, self.left_fast(point)),
                 min(right_slow_max, self.right_slow(point)),
                 min(left_slow_max, self.left_slow(point)),
-                min(stop_max, self.stop(point))
+                min(stop_max, self.f_stop(point))
             ))
 
         mass_center_dividened = 0
@@ -290,12 +321,17 @@ class FuzzyController:
             mass_center_dividened += force_membership[i] * force_points[i] * dx
             mass_center_divisor += force_membership[i] * dx
 
-        mass_center = mass_center_dividened / mass_center_divisor
+        if mass_center_divisor != 0:
+            mass_center = mass_center_dividened / mass_center_divisor
+        else:
+            mass_center = 0
         return mass_center
 
     def decide(self, world):
         output = self._make_output()
         force = self.inference(self._make_input(world))
         return force
+
         # self.system.calculate(self._make_input(world), output)
+        # print(self._make_input(world))
         # return output['force']
