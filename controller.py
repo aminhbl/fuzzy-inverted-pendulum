@@ -150,6 +150,48 @@ class FuzzyController:
         else:
             return 0
 
+    # --------------- CP
+
+    def left_far(self, x):
+        if -10 <= x < -5:
+            return -0.2 * x - 1
+        elif x < -10:
+            return 1
+        else:
+            return 0
+
+    def left_near(self, x):
+        if -10 < x < -2.5:
+            return 0.13 * x + 1.3
+        elif -2.5 <= x < 0:
+            return -0.4 * x
+        else:
+            return 0
+
+    def cp_stop(self, x):
+        if -2.5 < x <= 0:
+            return 0.4 * x + 1
+        elif 0 < x < 2.5:
+            return -0.4 * x + 1
+        else:
+            return 0
+
+    def right_near(self, x):
+        if 0 < x <= 2.5:
+            return 0.4 * x
+        elif 2.5 < x < 10:
+            return -0.13 * x + 1.3
+        else:
+            return 0
+
+    def right_far(self, x):
+        if 5 < x <= 10:
+            return 0.2 * x - 1
+        elif x > 10:
+            return 1
+        else:
+            return 0
+
     # --------------- Force
 
     def left_fast(self, x):
@@ -225,6 +267,13 @@ class FuzzyController:
         ccw_slow = self.ccw_slow(pv)
         ccw_fast = self.ccw_fast(pv)
 
+        cp = inputs['cp']
+        left_far = self.left_far(cp)
+        left_near = self.left_near(cp)
+        cp_stop = self.cp_stop(cp)
+        right_near = self.right_near(cp)
+        right_far = self.right_far(cp)
+
         # print('pv: {}'.format(pv))
         # print(cw_fast)
         # print(cw_slow)
@@ -244,7 +293,9 @@ class FuzzyController:
             min(up_right, cw_fast),
             min(up_left, cw_fast),
             min(down, pv_stop),
-            min(up, cw_fast)
+            min(up, cw_fast),
+
+            # min(up_more_right, left_near),
         ]
         right_fast_max = max(right_fast_rules)
 
@@ -259,7 +310,9 @@ class FuzzyController:
             min(up_left, pv_stop),
             min(up_right, ccw_fast),
             min(up_left, ccw_fast),
-            min(up, ccw_fast)
+            min(up, ccw_fast),
+
+            # min(up_more_left, right_near)
         ]
         left_fast_max = max(left_fast_rules)
 
@@ -267,7 +320,10 @@ class FuzzyController:
             min(up_more_left, cw_fast),
             min(down_right, cw_fast),
             min(up_right, ccw_slow),
-            min(up, cw_slow)
+            min(up, cw_slow),
+
+            # min(up_right, left_near),
+            # min(cw_fast, left_near),
         ]
         right_slow_max = max(right_slow_rules)
 
@@ -275,7 +331,10 @@ class FuzzyController:
             min(up_more_right, ccw_fast),
             min(down_left, ccw_fast),
             min(up_left, cw_slow),
-            min(up, ccw_slow)
+            min(up, ccw_slow),
+
+            # min(up_left, right_near),
+            # min(ccw_fast, right_near),
         ]
         left_slow_max = max(left_slow_rules)
 
@@ -291,7 +350,9 @@ class FuzzyController:
             min(down_left, cw_fast),
             min(down, cw_fast),
             min(down, ccw_fast),
-            min(up, pv_stop)
+            min(up, pv_stop),
+
+            # min(up, cp_stop),
         ]
         stop_max = max(stop_rules)
 
@@ -328,10 +389,16 @@ class FuzzyController:
         return mass_center
 
     def decide(self, world):
-        output = self._make_output()
         force = self.inference(self._make_input(world))
         return force
 
+        # output = self._make_output()
         # self.system.calculate(self._make_input(world), output)
-        # print(self._make_input(world))
         # return output['force']
+
+
+# RULE 43: IF (pa IS up_right) AND (cp IS left_near) THEN force IS right_slow;
+# RULE 44: IF (pa IS up_left) AND (cp IS right_near) THEN force IS left_slow;
+# RULE 43: IF (pa IS up_more_right) AND (cp IS left_near) THEN force IS right_fast;
+# RULE 44: IF (pa IS up_more_left) AND (cp IS right_near) THEN force IS left_fast;
+# RULE 45: IF (pa IS up) AND (cp IS stop) THEN force IS stop;
